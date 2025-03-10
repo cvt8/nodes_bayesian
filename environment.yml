@@ -1,0 +1,16 @@
+name: nodes_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python
+  - numpy
+  - scipy
+  - tqdm
+  - matplotlib
+  - scikit-learn
+  - pip:
+    - torch --index-url https://download.pytorch.org/whl/cu126
+    - torchvision --index-url https://download.pytorch.org/whl/cu126
+    - rich
+    - prettytable
