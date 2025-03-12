@@ -110,8 +110,8 @@ class StoModel(object):
         logits = self.forward(x, n_sample)
         logp = D.Categorical(logits=logits).log_prob(y).mean()
         kl, entropy = self.kl_and_entropy(kl_type, entropy_type)
-        # Supposons que self.forward retourne également les paramètres alpha de la Dirichlet
-        alpha = self.get_alpha(x, n_sample)  # À implémenter selon votre modèle
+
+        alpha = self.get_alpha(x, n_sample)  # À implémenter
         return (-logp, kl, entropy, logits, alpha)
 
     def entropy(self, n_sample, with_weight):
@@ -136,9 +136,6 @@ class StoModel(object):
         return mutual_info
 
     def get_alpha(self, x, n_sample):
-        # À implémenter selon votre modèle
-        # Cette méthode doit retourner les paramètres alpha de la distribution de Dirichlet
-        # Exemple fictif :
         logits = self.forward(x, n_sample)
         alpha = F.softplus(logits) + 1.0  # Assure que alpha > 0
         return alpha
