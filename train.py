@@ -19,17 +19,21 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
     kl_min = 0.0
     kl_max = 1.0
     last_iter = 200
+    lambda_ = 1
 
     for inputs, targets in tqdm(train_loader):
         inputs = inputs.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
         optimizer.zero_grad()
-        eloglike, kl, entropy = model.vi_loss(
+        eloglike, kl, entropy, logits, alpha = model.vi_loss(
             inputs, targets, num_train_sample, kl_type, entropy_type
         )
         vi_weight = get_vi_weight(epoch, kl_min, kl_max, last_iter)
-        loss = eloglike + vi_weight * (kl - gamma * entropy) / (n_batch * inputs.size(0))
+
+        mutual_info = model.mutual_information(inputs, logits, alpha, num_train_sample, entropy_type)
+
+        loss = eloglike + vi_weight * (kl - gamma * entropy - lambda_ * mutual_info) / (n_batch * inputs.size(0))
 
         loss.backward()
         optimizer.step()
@@ -37,6 +41,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
         total_eloglike += eloglike.detach().item()
         last_kl = kl.item()
         last_entropy = entropy.item()
+        last_mutual_info = mutual_info.item()
 
     scheduler.step()
     total_eloglike /= len(train_loader)

@@ -8,6 +8,7 @@ import torch.nn.functional as F
 from prettytable import PrettyTable
 from torch.nn.modules.utils import _pair
 from copy import deepcopy
+from torch.special import gammaln, digamma
 
 
 def count_parameters(model, logger):
@@ -67,6 +68,30 @@ def enable_running_stats(model):
     model.apply(_enable)
 
 
+def beta_function(alpha):
+    log_B_alpha = torch.sum(gammaln(alpha), dim=-1) - gammaln(torch.sum(alpha, dim=-1))
+    return log_B_alpha
+
+
+def dirichlet_entropy(alpha):
+    K = alpha.size(-1)
+    alpha_sum = torch.sum(alpha, dim=-1)
+    log_B_alpha = beta_function(alpha)
+    term1 = (alpha_sum - K) * digamma(alpha_sum)
+    term2 = -torch.sum((alpha - 1) * digamma(alpha), dim=-1)
+    entropy = log_B_alpha + term1 + term2
+    return entropy
+
+
+def conditional_entropy_approx(alpha, k):
+    alpha_k = alpha[:, k]
+    alpha_sum = torch.sum(alpha, dim=-1)
+    alpha_not_k = alpha_sum - alpha_k
+    log_B = gammaln(alpha_k) + gammaln(alpha_not_k) - gammaln(alpha_sum)
+    cond_entropy = log_B - (alpha_k - 1) * digamma(alpha_k) - (alpha_not_k - 1) * digamma(alpha_not_k) + (alpha_sum - 2) * digamma(alpha_sum)
+    return cond_entropy
+
+
 class StoModel(object):
     def sto_init(self, n_components):
         self.n_components = n_components
@@ -82,8 +107,12 @@ class StoModel(object):
 
     def vi_loss(self, x, y, n_sample, kl_type, entropy_type):
         y = y.unsqueeze(1).expand(-1, n_sample)
-        logp = D.Categorical(logits=self.forward(x, n_sample)).log_prob(y).mean()
-        return (-logp, *self.kl_and_entropy(kl_type, entropy_type))
+        logits = self.forward(x, n_sample)
+        logp = D.Categorical(logits=logits).log_prob(y).mean()
+        kl, entropy = self.kl_and_entropy(kl_type, entropy_type)
+        # Supposons que self.forward retourne également les paramètres alpha de la Dirichlet
+        alpha = self.get_alpha(x, n_sample)  # À implémenter selon votre modèle
+        return (-logp, kl, entropy, logits, alpha)
 
     def entropy(self, n_sample, with_weight):
         return sum(m.entropy(n_sample, with_weight) for m in self.sto_modules)
@@ -94,6 +123,25 @@ class StoModel(object):
         logp = D.Categorical(logits=prob).log_prob(y.unsqueeze(1).expand(-1, self.n_components*n_sample))
         logp = torch.logsumexp(logp, 1) - torch.log(torch.tensor(self.n_components*n_sample, dtype=torch.float32, device=x.device))
         return -logp.mean(), prob
+
+    def mutual_information(self, x, logits, alpha, n_sample, entropy_type):
+        probs = F.softmax(logits, dim=-1)
+        K = probs.size(-1)
+        H_theta_G = dirichlet_entropy(alpha)
+        mutual_info = 0.0
+        for k in range(K):
+            E_theta_k = probs[:, k].mean()
+            H_theta_k_given_phi_G = conditional_entropy_approx(alpha, k)
+            mutual_info += E_theta_k * (H_theta_G - H_theta_k_given_phi_G)
+        return mutual_info
+
+    def get_alpha(self, x, n_sample):
+        # À implémenter selon votre modèle
+        # Cette méthode doit retourner les paramètres alpha de la distribution de Dirichlet
+        # Exemple fictif :
+        logits = self.forward(x, n_sample)
+        alpha = F.softplus(logits) + 1.0  # Assure que alpha > 0
+        return alpha
 
 
 class StoLayer(object):
