@@ -60,34 +60,6 @@ def disable_running_stats(model):
     model.apply(_disable)
 
 
-def conditional_entropy_dirichlet(x_samples, y_samples, alpha, n_bins=10, bandwidth=0.1):
-    N, K = y_samples.shape
-
-    x_min, x_max = np.min(x_samples), np.max(x_samples)
-    x_bins = np.linspace(x_min, x_max, n_bins + 1)
-    bin_indices = np.digitize(x_samples, x_bins) - 1
-
-    conditional_entropies = []
-    weights = []
-
-    for bin_idx in range(n_bins):
-        mask = bin_indices == bin_idx
-        if np.sum(mask) == 0:
-            continue
-
-        y_in_bin = y_samples[mask]
-        n_samples_in_bin = y_in_bin.shape[0]
-        weights.append(n_samples_in_bin / N)
-
-        # Estimer les paramètres de la Dirichlet conditionnelle
-        # Pour simplifier, nous ajustons une Dirichlet aux échantillons de Y dans ce bin
-        # En pratique, cela peut être amélioré avec une estimation par noyau ou autre
-        alpha_hat = estimate_dirichlet_parameters(y_in_bin, alpha)
-
-        entropy = dirichlet_entropy(alpha_hat)
-        conditional_entropies.append(entropy)
-
-
 def enable_running_stats(model):
     def _enable(module):
         if isinstance(module, nn.BatchNorm2d) and hasattr(module, "backup_momentum"):
@@ -122,13 +94,22 @@ def dirichlet_entropy(alpha):
 
 
 def conditional_entropy_approx(alpha, k):
-    print(alpha)
-    alpha_k = alpha[:, k]
-    alpha_sum = torch.sum(alpha, dim=-1)
-    alpha_not_k = alpha_sum - alpha_k
-    log_B = gammaln(alpha_k) + gammaln(alpha_not_k) - gammaln(alpha_sum)
-    cond_entropy = log_B - (alpha_k - 1) * digamma(alpha_k) - (alpha_not_k - 1) * digamma(alpha_not_k) + (alpha_sum - 2) * digamma(alpha_sum)
-    return cond_entropy
+    return 1
+    alpha = np.array(alpha)
+    K = len(alpha)
+    if k < 1 or k > K:
+        raise ValueError(f"k must be between 1 and {K}")
+
+    alpha_k = alpha[k]
+    sum_alpha = np.sum(alpha)
+    sum_alpha_minus_k = sum_alpha - alpha_k
+
+    term1 = np.log(beta(alpha_k, sum_alpha_minus_k))
+    term2 = -(alpha_k - 1) * digamma(alpha_k)
+    term3 = -(sum_alpha_minus_k - 1) * digamma(sum_alpha_minus_k)
+    term4 = -(sum_alpha - 2) * digamma(sum_alpha)
+
+    return term1 + term2 + term3 + term4
 
 
 class StoModel(object):
@@ -151,6 +132,10 @@ class StoModel(object):
         kl, entropy = self.kl_and_entropy(kl_type, entropy_type)
 
         alpha = self.get_alpha(x, n_sample)
+        print((-logp).size())
+        input()
+        self.alpha[-logp-kl > 0] += 1
+        print(self.alpha)
         return (-logp, kl, entropy, logits, alpha)
 
     def entropy(self, n_sample, with_weight):
@@ -173,14 +158,14 @@ class StoModel(object):
             E_theta_k = probs[:, k].mean()
             H_theta_k_given_phi_G = conditional_entropy_approx(alpha, k)
             mutual_info += E_theta_k * (H_theta_G - H_theta_k_given_phi_G)
-            print(E_theta_k * (H_theta_G - H_theta_k_given_phi_G))
-        print(mutual_info)
-        input()
         return mutual_info
 
     def get_alpha(self, x, n_sample):
-        alpha = torch.ones((10, 10)).to(x.device)
-        return alpha
+        if not hasattr(self, 'alpha'):
+            self.alpha = torch.ones(10).to(x.device)
+            self.alpha.requires_grad_(False)
+
+        return self.alpha
 
 
 class StoLayer(object):
@@ -200,7 +185,7 @@ class StoLayer(object):
         for p1, p2 in zip(det_model.buffers(), buffer_tensors):
             p1.data = p2.data
         return det_model
-    
+
     @staticmethod
     def get_mask(mean, std, index, sample):
         if index == 'ones':
@@ -210,7 +195,7 @@ class StoLayer(object):
         if sample:
             return D.Normal(mean[index], std[index]).sample()
         return mean[index]
-    
+
     def to_det_module(self, index):
         raise NotImplementedError()
 
@@ -234,7 +219,7 @@ class StoLayer(object):
         self.prior_std = nn.Parameter(torch.tensor(prior_std), requires_grad=False)
         self.posterior_mean_init = posterior_mean_init
         self.posterior_std_init = posterior_std_init
-    
+
     def get_mult_noise(self, input, indices):
         if indices == 'ones':
             return 1.0

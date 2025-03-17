@@ -2,10 +2,50 @@ import torch
 from torch.optim.lr_scheduler import LambdaLR
 from dataset import get_corrupt_data_loader, get_data_loader
 import os
+from eval import eval
 from train import load_checkpoint, evaluate_and_save
 from train import save_checkpoint, train_epoch, get_vi_weight
 from model import StoResNet18
+import os
+import json
+import numpy as np
 
+
+train_history = {
+    'loglike': [],
+    'kl': [],
+    'entropy': []
+}
+
+val_history = {
+    'nll': [],
+    'nll_miss': [],
+    'ece': [],
+    'predictive_entropy_total_mean': [],
+    'predictive_entropy_total_std': [],
+    'predictive_entropy_aleatoric_mean': [],
+    'predictive_entropy_aleatoric_std': [],
+    'predictive_entropy_epistemic_mean': [],
+    'predictive_entropy_epistemic_std': [],
+    'top-1': [],
+    'top-2': [],
+    'top-3': []
+}
+
+test_history = {
+    'nll': [],
+    'nll_miss': [],
+    'ece': [],
+    'predictive_entropy_total_mean': [],
+    'predictive_entropy_total_std': [],
+    'predictive_entropy_aleatoric_mean': [],
+    'predictive_entropy_aleatoric_std': [],
+    'predictive_entropy_epistemic_mean': [],
+    'predictive_entropy_epistemic_std': [],
+    'top-1': [],
+    'top-2': [],
+    'top-3': []
+}
 
 lr = 1e-4
 wd = 1e-5
@@ -15,6 +55,21 @@ sto_milestones = (0.5, 0.9)
 lr_ratio_det = 0.01
 lr_ratio_sto = 1/3
 
+
+def save_metrics_history(history, save_dir, split_name):
+    """
+    Sauvegarde l'historique des métriques dans des fichiers JSON
+    """
+    os.makedirs(save_dir, exist_ok=True)
+    for metric_name, values in history.items():
+        filepath = os.path.join(save_dir, f"{split_name}_{metric_name}_history.json")
+        with open(filepath, 'w') as f:
+            json.dump({
+                'metric': metric_name,
+                'split': split_name,
+                'values': values
+            }, f, indent=4)
+        print(f"Saved {split_name} {metric_name} history to {filepath}")
 
 # function used by our scheduler
 def schedule(num_epochs, epoch, milestones, lr_ratio):
@@ -79,28 +134,72 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
         model = load_checkpoint(model, det_checkpoint, device)
         print(f"Loaded deterministic checkpoint from {det_checkpoint}")
 
-    # Entraînement
-    trainmem = []
-    valmem = []
-
     save_dir = os.path.join(base_dir, run_id)
     for epoch in range(num_epochs):
         # Entraîne pour une époque
         eloglike, kl, entropy = train_epoch(
-            model, train_loader, optimizer, scheduler, device, epoch, num_train_sample, kl_type, gamma, entropy_type, n_batch
+            model, train_loader, optimizer, scheduler, device, epoch, 
+            num_train_sample, kl_type, gamma, entropy_type, n_batch
         )
 
+        # Stocke les métriques d'entraînement
+        train_history['loglike'].append(float(eloglike))
+        train_history['kl'].append(float(kl))
+        train_history['entropy'].append(float(entropy))
+
+        # Évalue sur validation et test
+        val_metrics = eval(model, valid_loader, device, 1, 15)
+        test_metrics = eval(model, test_loader, device, 1, 15)
+
+        # Stocke les métriques de validation
+        val_history['nll'].append(val_metrics['nll'])
+        val_history['nll_miss'].append(val_metrics['nll_miss'])
+        val_history['ece'].append(val_metrics['ece'])
+        val_history['predictive_entropy_total_mean'].append(val_metrics['predictive_entropy']['total'][0])
+        val_history['predictive_entropy_total_std'].append(val_metrics['predictive_entropy']['total'][1])
+        val_history['predictive_entropy_aleatoric_mean'].append(val_metrics['predictive_entropy']['aleatoric'][0])
+        val_history['predictive_entropy_aleatoric_std'].append(val_metrics['predictive_entropy']['aleatoric'][1])
+        val_history['predictive_entropy_epistemic_mean'].append(val_metrics['predictive_entropy']['epistemic'][0])
+        val_history['predictive_entropy_epistemic_std'].append(val_metrics['predictive_entropy']['epistemic'][1])
+        val_history['top-1'].append(val_metrics['top-1'])
+        val_history['top-2'].append(val_metrics['top-2'])
+        val_history['top-3'].append(val_metrics['top-3'])
+
+        # Stocke les métriques de test
+        test_history['nll'].append(test_metrics['nll'])
+        test_history['nll_miss'].append(test_metrics['nll_miss'])
+        test_history['ece'].append(test_metrics['ece'])
+        test_history['predictive_entropy_total_mean'].append(test_metrics['predictive_entropy']['total'][0])
+        test_history['predictive_entropy_total_std'].append(test_metrics['predictive_entropy']['total'][1])
+        test_history['predictive_entropy_aleatoric_mean'].append(test_metrics['predictive_entropy']['aleatoric'][0])
+        test_history['predictive_entropy_aleatoric_std'].append(test_metrics['predictive_entropy']['aleatoric'][1])
+        test_history['predictive_entropy_epistemic_mean'].append(test_metrics['predictive_entropy']['epistemic'][0])
+        test_history['predictive_entropy_epistemic_std'].append(test_metrics['predictive_entropy']['epistemic'][1])
+        test_history['top-1'].append(test_metrics['top-1'])
+        test_history['top-2'].append(test_metrics['top-2'])
+        test_history['top-3'].append(test_metrics['top-3'])
+
         # Affiche les métriques
-        if (epoch + 1) % logging_freq == 0:
+        if (epoch + 1) % 1 == 0:
             vi_weight = get_vi_weight(epoch, kl_min, kl_max, last_iter)
             lr1 = optimizer.param_groups[0]['lr']
             lr2 = optimizer.param_groups[1]['lr'] if len(optimizer.param_groups) > 1 else 0.0
-            print(f"Epoch {epoch}: loglike: {eloglike:.4f}, kl: {kl:.4f}, entropy: {entropy:.4f}, kl weight: {vi_weight:.4f}, lr1: {lr1:.4f}, lr2: {lr2:.4f}")
+            print(f"Epoch {epoch}: loglike: {eloglike:.4f}, kl: {kl:.4f}, entropy: {entropy:.4f}, "
+                  f"kl weight: {vi_weight:.4f}, lr1: {lr1:.4f}, lr2: {lr2:.4f}")
+            print(f"Validation metrics: NLL: {val_metrics['nll']:.4f}, ECE: {val_metrics['ece']:.4f}, "
+                  f"Top-1: {val_metrics['top-1']:.4f}")
+            print(f"Test metrics: NLL: {test_metrics['nll']:.4f}, ECE: {test_metrics['ece']:.4f}, "
+                  f"Top-1: {test_metrics['top-1']:.4f}")
 
         # Sauvegarde un checkpoint intermédiaire
         if (epoch + 1) % save_freq == 0:
             checkpoint_path = save_checkpoint(model, save_dir, epoch + 1)
             print(f"Saved checkpoint to {checkpoint_path}")
+
+        metrics_save_dir = os.path.join(save_dir, "metrics_history")
+        save_metrics_history(train_history, metrics_save_dir, "train")
+        save_metrics_history(val_history, metrics_save_dir, "val")
+        save_metrics_history(test_history, metrics_save_dir, "test")
 
     # Sauvegarde le checkpoint final
     final_checkpoint_path = save_checkpoint(model, save_dir)

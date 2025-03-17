@@ -39,6 +39,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
         print(mutual_info)
         print(entropy)
         print(loss)
+
         loss.backward()
         optimizer.step()
 
