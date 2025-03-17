@@ -132,10 +132,7 @@ class StoModel(object):
         kl, entropy = self.kl_and_entropy(kl_type, entropy_type)
 
         alpha = self.get_alpha(x, n_sample)
-        print((-logp).size())
-        input()
-        self.alpha[-logp-kl > 0] += 1
-        print(self.alpha)
+        self.alpha[deltaelbok] += 1
         return (-logp, kl, entropy, logits, alpha)
 
     def entropy(self, n_sample, with_weight):
