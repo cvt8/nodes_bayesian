@@ -64,7 +64,7 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
 
     # Charge les données
     if validation:
-        train_loader, valid_loader, test_loader = get_dataloader()
+        train_loader, valid_loader, test_loader = get_dataloader(validation=True)
         print(f"Train size: {len(train_loader.dataset)}, validation size: {len(valid_loader.dataset)}, test size: {len(test_loader.dataset)}")
     else:
         train_loader, test_loader = get_dataloader()
@@ -75,11 +75,14 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
     print(f"Number of parameters: {sum(p.numel() for p in model.parameters())}")
     print(model)
 
-    if det_checkpoint:
+    if False:
         model = load_checkpoint(model, det_checkpoint, device)
         print(f"Loaded deterministic checkpoint from {det_checkpoint}")
 
     # Entraînement
+    trainmem = []
+    valmem = []
+
     save_dir = os.path.join(base_dir, run_id)
     for epoch in range(num_epochs):
         # Entraîne pour une époque
@@ -164,13 +167,13 @@ if __name__ == "__main__":
     main(
         num_train_sample=1,
         device=device,
-        validation=False,
-        num_epochs=0,
+        validation=True,
+        num_epochs=1,
         logging_freq=1,
         kl_type="mean",  # mean, full, upper_bound
         gamma=1.0,
         entropy_type="conditional",
-        det_checkpoint="",
+        det_checkpoint=None,
         dataset="cifar10",
         save_freq=1,
         base_dir="./experiments",

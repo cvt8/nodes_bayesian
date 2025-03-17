@@ -33,8 +33,12 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
 
         mutual_info = model.mutual_information(inputs, logits, alpha, num_train_sample, entropy_type)
 
-        loss = eloglike + vi_weight * (kl - gamma * entropy - lambda_ * mutual_info) / (n_batch * inputs.size(0))
-
+        loss = eloglike - vi_weight * (kl - gamma * entropy + lambda_ * mutual_info) / (n_batch * inputs.size(0))
+        print(eloglike)
+        print(kl)
+        print(mutual_info)
+        print(entropy)
+        print(loss)
         loss.backward()
         optimizer.step()
 

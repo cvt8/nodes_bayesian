@@ -60,6 +60,34 @@ def disable_running_stats(model):
     model.apply(_disable)
 
 
+def conditional_entropy_dirichlet(x_samples, y_samples, alpha, n_bins=10, bandwidth=0.1):
+    N, K = y_samples.shape
+
+    x_min, x_max = np.min(x_samples), np.max(x_samples)
+    x_bins = np.linspace(x_min, x_max, n_bins + 1)
+    bin_indices = np.digitize(x_samples, x_bins) - 1
+
+    conditional_entropies = []
+    weights = []
+
+    for bin_idx in range(n_bins):
+        mask = bin_indices == bin_idx
+        if np.sum(mask) == 0:
+            continue
+
+        y_in_bin = y_samples[mask]
+        n_samples_in_bin = y_in_bin.shape[0]
+        weights.append(n_samples_in_bin / N)
+
+        # Estimer les paramètres de la Dirichlet conditionnelle
+        # Pour simplifier, nous ajustons une Dirichlet aux échantillons de Y dans ce bin
+        # En pratique, cela peut être amélioré avec une estimation par noyau ou autre
+        alpha_hat = estimate_dirichlet_parameters(y_in_bin, alpha)
+
+        entropy = dirichlet_entropy(alpha_hat)
+        conditional_entropies.append(entropy)
+
+
 def enable_running_stats(model):
     def _enable(module):
         if isinstance(module, nn.BatchNorm2d) and hasattr(module, "backup_momentum"):
@@ -73,6 +101,16 @@ def beta_function(alpha):
     return log_B_alpha
 
 
+def expectation_dirichlet(alpha, k):
+    return alpha[k] / np.sum(alpha)
+
+
+def update_dirichlet_parameters(alpha, outcome, delta_elbo=0):
+    if delta_elbo < 0:
+        alpha[outcome] += 1
+    return alpha
+
+
 def dirichlet_entropy(alpha):
     K = alpha.size(-1)
     alpha_sum = torch.sum(alpha, dim=-1)
@@ -84,6 +122,7 @@ def dirichlet_entropy(alpha):
 
 
 def conditional_entropy_approx(alpha, k):
+    print(alpha)
     alpha_k = alpha[:, k]
     alpha_sum = torch.sum(alpha, dim=-1)
     alpha_not_k = alpha_sum - alpha_k
@@ -111,7 +150,7 @@ class StoModel(object):
         logp = D.Categorical(logits=logits).log_prob(y).mean()
         kl, entropy = self.kl_and_entropy(kl_type, entropy_type)
 
-        alpha = self.get_alpha(x, n_sample)  # À implémenter
+        alpha = self.get_alpha(x, n_sample)
         return (-logp, kl, entropy, logits, alpha)
 
     def entropy(self, n_sample, with_weight):
@@ -129,15 +168,18 @@ class StoModel(object):
         K = probs.size(-1)
         H_theta_G = dirichlet_entropy(alpha)
         mutual_info = 0.0
+        probs = probs.squeeze(1)
         for k in range(K):
             E_theta_k = probs[:, k].mean()
             H_theta_k_given_phi_G = conditional_entropy_approx(alpha, k)
             mutual_info += E_theta_k * (H_theta_G - H_theta_k_given_phi_G)
+            print(E_theta_k * (H_theta_G - H_theta_k_given_phi_G))
+        print(mutual_info)
+        input()
         return mutual_info
 
     def get_alpha(self, x, n_sample):
-        logits = self.forward(x, n_sample)
-        alpha = F.softplus(logits) + 1.0  # Assure que alpha > 0
+        alpha = torch.ones((10, 10)).to(x.device)
         return alpha
 
 
