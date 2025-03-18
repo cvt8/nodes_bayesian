@@ -9,6 +9,7 @@ dependencies:
   - tqdm
   - matplotlib
   - scikit-learn
+  - pip
   - pip:
     - torch --index-url https://download.pytorch.org/whl/cu126
     - torchvision --index-url https://download.pytorch.org/whl/cu126
