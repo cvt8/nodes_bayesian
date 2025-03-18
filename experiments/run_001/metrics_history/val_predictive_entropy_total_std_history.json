@@ -1,0 +1,7 @@
+{
+    "metric": "predictive_entropy_total_std",
+    "split": "val",
+    "values": [
+        0.45586344599723816
+    ]
+}

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=test
+#SBATCH --job-name=nodes_bm
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --output=logs/test.out

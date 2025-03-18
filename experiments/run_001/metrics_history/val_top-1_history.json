@@ -1,0 +1,7 @@
+{
+    "metric": "top-1",
+    "split": "val",
+    "values": [
+        0.3084
+    ]
+}

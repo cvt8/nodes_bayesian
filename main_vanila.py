@@ -275,7 +275,7 @@ if __name__ == "__main__":
         det_checkpoint=None,
         dataset="cifar10",
         save_freq=1,
-        base_dir="./experiments",
+        base_dir="./experiments_vanila",
         run_id="run_basic_loss",
         model=model,
         scheduler=scheduler,

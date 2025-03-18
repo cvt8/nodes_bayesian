@@ -1,0 +1,13 @@
+
+CondaError: Run 'conda init' before 'conda activate'
+
+/home/adminialab/GitFiles/nodes_bayesian/train.py:24: TqdmExperimentalWarning: rich is experimental/alpha
+  for inputs, targets in tqdm(train_loader):
+/home/adminialab/GitFiles/nodes_bayesian/utils.py:105: UserWarning: To copy construct from a tensor, it is recommended to use sourceTensor.clone().detach() or sourceTensor.clone().detach().requires_grad_(True), rather than torch.tensor(sourceTensor).
+  return torch.tensor(a+b+c+d)
+/home/adminialab/GitFiles/nodes_bayesian/eval.py:22: TqdmExperimentalWarning: rich is experimental/alpha
+  for inputs, targets in tqdm(dataloader):
+/home/adminialab/GitFiles/nodes_bayesian/train_vanila.py:23: TqdmExperimentalWarning: rich is experimental/alpha
+  for inputs, targets in tqdm(train_loader):
+/home/adminialab/GitFiles/nodes_bayesian/eval.py:22: TqdmExperimentalWarning: rich is experimental/alpha
+  for inputs, targets in tqdm(dataloader):
