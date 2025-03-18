@@ -54,6 +54,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
         # Calculate the difference in loss
         loss_second_pass = elbo_loss.item()
         loss_diff = loss_first_pass - loss_second_pass
+        print(loss_diff)
 
         # Update alpha based on the sign of the loss difference
         model.update_alpha(logits, loss_diff) #A vérifier
