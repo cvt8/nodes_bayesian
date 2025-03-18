@@ -147,14 +147,25 @@ class StoModel(object):
             E_theta_k = probs[:, k].mean()
             mutual_info += E_theta_k * deltaH(alpha, k, K)
 
-        for k in range(K):
-            deltak = 2*alpha[k] / torch.sum(alpha) - 2 / K
-            print(deltak)
-            if deltak > 0:
-                self.alpha[k] += 1
-
         return mutual_info
+    
+    def update_alpha(self, logits, loss_diff):
+        probs = F.softmax(logits, dim=-1)
+        K = probs.size(-1)
+        loss_sign = np.sign(loss_diff)
 
+        print(self.alpha)
+
+        for k in range(K):
+            E_theta_k = probs[:, :, k].mean()
+            if loss_sign < 0:
+                self.alpha[k] += E_theta_k
+            else:
+                self.alpha += E_theta_k / (K - 1)
+                self.alpha[k] -= E_theta_k / (K - 1)
+        return self.alpha
+
+    
     def get_alpha(self, x, n_sample, K):
         if not hasattr(self, 'alpha'):
             self.alpha = torch.rand(K).to(x.device) * (2 - 1) + 1

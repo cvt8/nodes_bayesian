@@ -25,25 +25,38 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
         inputs = inputs.to(device, non_blocking=True)
         targets = targets.to(device, non_blocking=True)
 
+        # First pass with gradient calculation
         optimizer.zero_grad()
         eloglike, kl, entropy, logits, alpha = model.vi_loss(
             inputs, targets, num_train_sample, kl_type, entropy_type
         )
         vi_weight = get_vi_weight(epoch, kl_min, kl_max, last_iter)
-
         mutual_info = model.mutual_information(inputs, logits, alpha, num_train_sample, entropy_type)
-
         loss = eloglike - vi_weight * (kl - gamma * entropy + lambda_ * mutual_info) / (n_batch * inputs.size(0))
-        print("elog", eloglike)
-        print("kl", kl)
-        print("mutual info", mutual_info)
-        print("entropy", entropy)
-        print("loss total", loss)
-        print("alpha", alpha)
-        input()
+        elbo_loss = eloglike - vi_weight * (kl ) / (n_batch * inputs.size(0))
 
         loss.backward()
         optimizer.step()
+
+        # Save the loss for comparison
+        loss_first_pass = elbo_loss.detach().item()
+
+        # Second pass without gradient calculation
+        with torch.no_grad():
+            eloglike, kl, entropy, logits, alpha = model.vi_loss(
+                inputs, targets, num_train_sample, kl_type, entropy_type
+            )
+            vi_weight = get_vi_weight(epoch, kl_min, kl_max, last_iter)
+            mutual_info = model.mutual_information(inputs, logits, alpha, num_train_sample, entropy_type)
+            loss = eloglike - vi_weight * (kl - gamma * entropy + lambda_ * mutual_info) / (n_batch * inputs.size(0))
+            elbo_loss = eloglike - vi_weight * (kl ) / (n_batch * inputs.size(0))
+
+        # Calculate the difference in loss
+        loss_second_pass = elbo_loss.item()
+        loss_diff = loss_first_pass - loss_second_pass
+
+        # Update alpha based on the sign of the loss difference
+        model.update_alpha(logits, loss_diff) #A vérifier
 
         total_eloglike += eloglike.detach().item()
         last_kl = kl.item()
