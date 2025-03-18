@@ -157,7 +157,7 @@ class StoModel(object):
 
     def get_alpha(self, x, n_sample, K):
         if not hasattr(self, 'alpha'):
-            self.alpha = torch.ones(K).to(x.device)
+            self.alpha = torch.rand(K).to(x.device) * (2 - 1) + 1
             self.alpha.requires_grad_(False)
 
         return self.alpha
