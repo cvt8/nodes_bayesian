@@ -93,23 +93,16 @@ def dirichlet_entropy(alpha):
     return entropy
 
 
-def conditional_entropy_approx(alpha, k):
-    return 1
-    alpha = np.array(alpha)
-    K = len(alpha)
-    if k < 1 or k > K:
-        raise ValueError(f"k must be between 1 and {K}")
+def conditional_entropy_approx(alpha, k, K):
+    pass
 
-    alpha_k = alpha[k]
-    sum_alpha = np.sum(alpha)
-    sum_alpha_minus_k = sum_alpha - alpha_k
 
-    term1 = np.log(beta(alpha_k, sum_alpha_minus_k))
-    term2 = -(alpha_k - 1) * digamma(alpha_k)
-    term3 = -(sum_alpha_minus_k - 1) * digamma(sum_alpha_minus_k)
-    term4 = -(sum_alpha - 2) * digamma(sum_alpha)
-
-    return term1 + term2 + term3 + term4
+def deltaH(alpha: torch.tensor, k, K):
+    a = - torch.log(alpha[k] / torch.sum(alpha))
+    b = (1-K) / torch.sum(alpha)
+    c = digamma(torch.sum(alpha))
+    d = -digamma(alpha[k])
+    return torch.tensor(a+b+c+d)
 
 
 class StoModel(object):
@@ -128,11 +121,11 @@ class StoModel(object):
     def vi_loss(self, x, y, n_sample, kl_type, entropy_type):
         y = y.unsqueeze(1).expand(-1, n_sample)
         logits = self.forward(x, n_sample)
+        K = logits.size(-1)
         logp = D.Categorical(logits=logits).log_prob(y).mean()
         kl, entropy = self.kl_and_entropy(kl_type, entropy_type)
 
-        alpha = self.get_alpha(x, n_sample)
-        self.alpha[deltaelbok] += 1
+        alpha = self.get_alpha(x, n_sample, K)
         return (-logp, kl, entropy, logits, alpha)
 
     def entropy(self, n_sample, with_weight):
@@ -148,18 +141,23 @@ class StoModel(object):
     def mutual_information(self, x, logits, alpha, n_sample, entropy_type):
         probs = F.softmax(logits, dim=-1)
         K = probs.size(-1)
-        H_theta_G = dirichlet_entropy(alpha)
         mutual_info = 0.0
         probs = probs.squeeze(1)
         for k in range(K):
             E_theta_k = probs[:, k].mean()
-            H_theta_k_given_phi_G = conditional_entropy_approx(alpha, k)
-            mutual_info += E_theta_k * (H_theta_G - H_theta_k_given_phi_G)
+            mutual_info += E_theta_k * deltaH(alpha, k, K)
+
+        for k in range(K):
+            deltak = 2*alpha[k] / torch.sum(alpha) - 2 / K
+            print(deltak)
+            if deltak > 0:
+                self.alpha[k] += 1
+
         return mutual_info
 
-    def get_alpha(self, x, n_sample):
+    def get_alpha(self, x, n_sample, K):
         if not hasattr(self, 'alpha'):
-            self.alpha = torch.ones(10).to(x.device)
+            self.alpha = torch.ones(K).to(x.device)
             self.alpha.requires_grad_(False)
 
         return self.alpha

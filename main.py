@@ -71,7 +71,7 @@ def save_metrics_history(history, save_dir, split_name):
             }, f, indent=4)
         print(f"Saved {split_name} {metric_name} history to {filepath}")
 
-# function used by our scheduler
+
 def schedule(num_epochs, epoch, milestones, lr_ratio):
     t = epoch / num_epochs
     m1, m2 = milestones
