@@ -12,12 +12,12 @@
 # To see all the options, type sbatch --help
 # Usage sbatch batch_example.sh
 
-cd /home/adminialab #Replace with the relevant path
+cd /home/your_name #Replace with the relevant path
 
 source ~/.bashrc
 conda activate nodes_env
 
-cd /home/adminialab/GitFiles/nodes_bayesian #Replace with the relevant path
+cd PATH_TO_FILE/nodes_bayesian #Replace with the relevant path
 
 # Creates the logs directory if it does not exist
 if [ ! -d logs ]; then
@@ -25,6 +25,6 @@ if [ ! -d logs ]; then
 fi
 
 python main.py
-#python main_vanila.py
+python main_vanila.py
 
 conda deactivate
