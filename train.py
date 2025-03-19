@@ -19,7 +19,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
     kl_min = 0.0
     kl_max = 1.0
     last_iter = 200
-    lambda_ = 1
+    lambda_ = 1/3
 
     for inputs, targets in tqdm(train_loader):
         inputs = inputs.to(device, non_blocking=True)

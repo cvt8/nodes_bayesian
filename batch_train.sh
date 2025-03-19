@@ -2,8 +2,8 @@
 #SBATCH --job-name=nodes_bm
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --output=logs/test.out
-#SBATCH --error=logs/test.err
+#SBATCH --output=logs/lamb10.out
+#SBATCH --error=logs/lamb10.err
 #SBATCH --array=1-1:1
 #SBATCH --mem-per-cpu=5000
 #SBATCH --mail-type=ALL
@@ -25,6 +25,5 @@ if [ ! -d logs ]; then
 fi
 
 python main.py
-#python main_vanila.py
 
 conda deactivate
