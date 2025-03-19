@@ -267,7 +267,7 @@ if __name__ == "__main__":
         num_train_sample=1,
         device=device,
         validation=True,
-        num_epochs=1,
+        num_epochs=10,
         logging_freq=1,
         kl_type="mean",  # mean, full, upper_bound
         gamma=1.0,
@@ -276,7 +276,7 @@ if __name__ == "__main__":
         dataset="cifar10",
         save_freq=1,
         base_dir="./experiments",
-        run_id="run_001",
+        run_id="run_002",
         model=model,
         scheduler=scheduler,
         optimizer=optimizer

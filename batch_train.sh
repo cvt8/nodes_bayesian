@@ -25,6 +25,6 @@ if [ ! -d logs ]; then
 fi
 
 python main.py
-python main_vanila.py
+#python main_vanila.py
 
 conda deactivate
