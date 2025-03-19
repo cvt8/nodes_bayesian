@@ -12,7 +12,7 @@ def main():
     # Dictionnaire des chemins de base pour chaque expérience
     base_paths = {
         'vanila_model': 'experiments/run_basic_loss/cifar10',
-        'our_model': 'experiments/run_001/cifar10'
+        'our_model': 'experiments/run_003/cifar10'
     }
     
     # Conditions : résultats de test et de validation
