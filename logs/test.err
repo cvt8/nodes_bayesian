@@ -11,3 +11,6 @@ CondaError: Run 'conda init' before 'conda activate'
   for inputs, targets in tqdm(train_loader):
 /home/adminialab/GitFiles/nodes_bayesian/eval.py:22: TqdmExperimentalWarning: rich is experimental/alpha
   for inputs, targets in tqdm(dataloader):
+
+CondaError: Run 'conda init' before 'conda deactivate'
+
