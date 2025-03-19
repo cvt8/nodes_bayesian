@@ -276,7 +276,7 @@ if __name__ == "__main__":
         dataset="cifar10",
         save_freq=1,
         base_dir="./experiments",
-        run_id="run_002",
+        run_id="run_003",
         model=model,
         scheduler=scheduler,
         optimizer=optimizer

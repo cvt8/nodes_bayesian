@@ -12,7 +12,7 @@ def main():
     # Dictionnaire des chemins de base pour chaque expérience
     base_paths = {
         'vanila_model': 'experiments/run_basic_loss/cifar10',
-        'our_model': 'experiments/run_001/cifar10'
+        'our_model': 'experiments/run_003/cifar10'
     }
     
     # Conditions : résultats de test et de validation
@@ -44,7 +44,7 @@ def main():
         ax.bar(index - bar_width/2, values_run_basic, bar_width, label='vanila_model')
         ax.bar(index + bar_width/2, values_run_001, bar_width, label='our_model')
         
-        ax.set_title(f"Métriques de base ({cond.capitalize()})")
+        ax.set_title(f"Base metrics ({cond.capitalize()})")
         ax.set_xticks(index)
         ax.set_xticklabels(metrics)
         ax.legend()
@@ -74,7 +74,7 @@ def main():
         ax.bar(index - bar_width/2, means_basic, bar_width, yerr=stds_basic, capsize=5, label='vanila_model')
         ax.bar(index + bar_width/2, means_001, bar_width, yerr=stds_001, capsize=5, label='our_model')
         
-        ax.set_title(f"Entropie prédictive ({cond.capitalize()})")
+        ax.set_title(f"Predictive entropy ({cond.capitalize()})")
         ax.set_xticks(index)
         ax.set_xticklabels(entropy_types)
         ax.legend()

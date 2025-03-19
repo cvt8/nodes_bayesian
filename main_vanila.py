@@ -1,5 +1,5 @@
 import torch
-from torch.optim.lr_scheduler import LambdaLR
+from torch.optim.lr_scheduler import LambdaLR # noqa: F401
 from dataset import get_corrupt_data_loader, get_data_loader
 import os
 from eval import eval
@@ -8,7 +8,7 @@ from train_vanila import save_checkpoint, train_epoch, get_vi_weight
 from model import StoResNet18
 import os
 import json
-import numpy as np
+import numpy as np 
 
 
 train_history = {

@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --job-name=nodes_bm
+#SBATCH --job-name=nodes_bm_3
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --output=logs/test.out
-#SBATCH --error=logs/test.err
+#SBATCH --output=logs/run3.out
+#SBATCH --error=logs/run3.err
 #SBATCH --array=1-1:1
 #SBATCH --mem-per-cpu=5000
 #SBATCH --mail-type=ALL
