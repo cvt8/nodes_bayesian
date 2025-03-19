@@ -20,6 +20,8 @@ conda env create
 conda activate nodes_env
 ```
 
+
+
 ## Downloading the datasets
 To run the experiments, one needs to run the following commands to download the necessary datasets and store them in the `data` folder:
 ```bash
@@ -52,6 +54,12 @@ bash download_scripts/download_tinyimagenet_c.sh
 ```bash
 python main.py #for our model
 python main_vanila.py #for the model proposed in trinh22a
+```
+
+Alternatively, if you use slurm, you may after having personalized your file, use :
+
+```bash
+sbatch batch_train.py
 ```
 
 ## References
