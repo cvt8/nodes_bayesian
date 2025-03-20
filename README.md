@@ -64,11 +64,8 @@ sbatch batch_train.py
 
 ## References
 
-We mainly started from the code developped here:
-
+We mainly started from the code developped here by Trung Trinh, Markus Heinonen, Luigi Acerbi and Samuel Kaski:
 
 [Tackling covariate shift with node-based Bayesian neural networks](https://proceedings.mlr.press/v162/trinh22a.html)
 
-by Trung Trinh, Markus Heinonen, Luigi Acerbi and Samuel Kaski
-
-For more information about the paper, please visit the [website](https://aaltopml.github.io/node-BNN-covariate-shift).
+For more information about their paper, please visit the [website](https://aaltopml.github.io/node-BNN-covariate-shift).
