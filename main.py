@@ -110,7 +110,7 @@ def get_corruptdataloader(intensity=1, test_batch_size=8, num_test_sample=1,
 
 
 def main(num_train_sample, device, validation, num_epochs, logging_freq,
-         kl_type, gamma, entropy_type, det_checkpoint, dataset, save_freq,
+         kl_type, gamma, lambda_info, entropy_type, det_checkpoint, dataset, save_freq,
          base_dir, run_id, model, scheduler, optimizer):
 
     kl_min = 0.0
@@ -138,8 +138,9 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
     for epoch in range(num_epochs):
         # Entraîne pour une époque
         eloglike, kl, entropy = train_epoch(
-            model, train_loader, optimizer, scheduler, device, epoch, 
-            num_train_sample, kl_type, gamma, entropy_type, n_batch
+            model, train_loader, optimizer, scheduler, device, epoch,
+            num_train_sample, kl_type, gamma, entropy_type, n_batch,
+            lambda_info=lambda_info
         )
 
         # Stocke les métriques d'entraînement
@@ -271,6 +272,7 @@ if __name__ == "__main__":
         logging_freq=1,
         kl_type="mean",  # mean, full, upper_bound
         gamma=1.0,
+        lambda_info=1.0,
         entropy_type="conditional",
         det_checkpoint=None,
         dataset="cifar10",

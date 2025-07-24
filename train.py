@@ -11,7 +11,8 @@ def get_vi_weight(epoch, kl_min, kl_max, last_iter):
 
 
 def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
-                num_train_sample, kl_type, gamma, entropy_type, n_batch):
+                num_train_sample, kl_type, gamma, entropy_type, n_batch,
+                lambda_info=1.0):
     model.train()
     total_eloglike = 0.0
     last_kl = 0.0
@@ -19,7 +20,6 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
     kl_min = 0.0
     kl_max = 1.0
     last_iter = 200
-    lambda_ = 1.0
 
     for inputs, targets in tqdm(train_loader):
         inputs = inputs.to(device, non_blocking=True)
@@ -32,7 +32,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
         )
         vi_weight = get_vi_weight(epoch, kl_min, kl_max, last_iter)
         mutual_info = model.mutual_information(inputs, logits, alpha, num_train_sample, entropy_type)
-        loss = eloglike - vi_weight * (kl - gamma * entropy + lambda_ * mutual_info) / (n_batch * inputs.size(0))
+        loss = eloglike - vi_weight * (kl - gamma * entropy + lambda_info * mutual_info) / (n_batch * inputs.size(0))
         elbo_loss = eloglike - vi_weight * (kl ) / (n_batch * inputs.size(0))
 
         loss.backward()
@@ -48,7 +48,7 @@ def train_epoch(model, train_loader, optimizer, scheduler, device, epoch,
             )
             vi_weight = get_vi_weight(epoch, kl_min, kl_max, last_iter)
             mutual_info = model.mutual_information(inputs, logits, alpha, num_train_sample, entropy_type)
-            loss = eloglike - vi_weight * (kl - gamma * entropy + lambda_ * mutual_info) / (n_batch * inputs.size(0))
+            loss = eloglike - vi_weight * (kl - gamma * entropy + lambda_info * mutual_info) / (n_batch * inputs.size(0))
             elbo_loss = eloglike - vi_weight * (kl ) / (n_batch * inputs.size(0))
 
         # Calculate the difference in loss
