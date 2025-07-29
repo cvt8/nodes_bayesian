@@ -24,7 +24,8 @@ if [ ! -d logs ]; then
     mkdir logs
 fi
 
-python main.py
-python main_vanila.py
+#python main.py
+#python main_vanila.py
+python hydra_sweep.py -m   gamma=0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0   lambda_info=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 --parallel-workers 16
 
 conda deactivate

@@ -16,3 +16,4 @@ dependencies:
     - rich
     - prettytable
     - hydra-core
+    - hydra-joblib-launcher

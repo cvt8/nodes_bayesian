@@ -6,6 +6,9 @@ condaenv.*
 data/
 logs/
 
+#Conda
+condaenv.*
+
 # data
 *.tar
 
