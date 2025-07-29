@@ -62,6 +62,22 @@ Alternatively, if you use slurm, you may after having personalized your file, us
 sbatch batch_train.py
 ```
 
+### Running sweeps in parallel
+
+You can launch a parameter sweep with Hydra using the `hydra_sweep.py` script.
+Jobs are executed in parallel via the `joblib` launcher. The number of workers
+can be configured with the `--parallel-workers` flag:
+
+```bash
+python hydra_sweep.py -m \
+  gamma=0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 \
+  lambda_info=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 \
+  --parallel-workers 16
+```
+
+This will run the 110 combinations of `gamma` and `lambda_info` using up to
+16 parallel workers.
+
 ## References
 
 We mainly started from the code developped here by Trung Trinh, Markus Heinonen, Luigi Acerbi and Samuel Kaski:
