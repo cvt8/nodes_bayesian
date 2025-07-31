@@ -1,4 +1,8 @@
 import sys
+import os
+import glob
+import shutil
+import re
 import torch
 from torch.optim.lr_scheduler import LambdaLR
 import hydra
@@ -8,6 +12,106 @@ from model import StoResNet18
 from main import schedule
 # reuse main function but with configurable lambda_info and gamma
 from main import main as run_main
+
+
+def find_highest_checkpoint(checkpoint_dir):
+    """Find the highest numbered checkpoint in a directory and its subdirectories."""
+    if not os.path.exists(checkpoint_dir):
+        return None
+    
+    # Search recursively for checkpoint files
+    checkpoint_files = []
+    for root, dirs, files in os.walk(checkpoint_dir):
+        for file in files:
+            if file.startswith("checkpoint") and file.endswith(".pt"):
+                checkpoint_files.append(os.path.join(root, file))
+    
+    if not checkpoint_files:
+        return None
+    
+    # Extract epoch numbers from checkpoint filenames
+    highest_epoch = -1
+    highest_checkpoint = None
+    
+    for checkpoint_file in checkpoint_files:
+        filename = os.path.basename(checkpoint_file)
+        # Match checkpoint followed by optional number and .pt
+        match = re.match(r'checkpoint(\d*)\.pt', filename)
+        if match:
+            epoch_str = match.group(1)
+            if epoch_str == '':
+                # checkpoint.pt without number, assume epoch 0
+                epoch = 0
+            else:
+                epoch = int(epoch_str)
+            
+            if epoch > highest_epoch:
+                highest_epoch = epoch
+                highest_checkpoint = checkpoint_file
+    
+    return highest_checkpoint
+
+
+def copy_metrics_history(source_dir, target_dir):
+    """Copy metrics_history directory from source to target."""
+    source_metrics = os.path.join(source_dir, "metrics_history")
+    target_metrics = os.path.join(target_dir, "metrics_history")
+    
+    if os.path.exists(source_metrics) and not os.path.exists(target_metrics):
+        print(f"Copying metrics_history from {source_metrics} to {target_metrics}")
+        shutil.copytree(source_metrics, target_metrics)
+
+
+def find_checkpoint_and_handle_cifar10(cfg):
+    """
+    Find the appropriate checkpoint and handle CIFAR10 specific logic.
+    Returns the checkpoint path or None.
+    """
+    base_dir = cfg.base_dir
+    current_run_id = cfg.run_id
+    dataset = cfg.dataset.lower()
+    
+    print(f"Looking for checkpoints...")
+    print(f"Base dir: {base_dir}")
+    print(f"Current run ID: {current_run_id}")
+    print(f"Dataset: {dataset}")
+    
+    # First, check for checkpoint in the current run directory
+    current_run_dir = os.path.join(base_dir, current_run_id)
+    print(f"Checking current run directory: {current_run_dir}")
+    current_checkpoint = find_highest_checkpoint(current_run_dir)
+    
+    if current_checkpoint:
+        print(f"Found checkpoint in current run directory: {current_checkpoint}")
+        return current_checkpoint
+    else:
+        print(f"No checkpoint found in current run directory")
+    
+    # For CIFAR10, also check the non-dataset-specific directory
+    if dataset == 'cifar10':
+        # Extract gamma and lambda values to construct the alternative run_id
+        gamma = cfg.gamma
+        lambda_info = cfg.lambda_info
+        alt_run_id = f"gamma_{gamma}_lambda_{lambda_info}"
+        alt_run_dir = os.path.join(base_dir, alt_run_id)
+        print(f"Checking alternative directory for CIFAR10: {alt_run_dir}")
+        alt_checkpoint = find_highest_checkpoint(alt_run_dir)
+        
+        if alt_checkpoint:
+            print(f"Found checkpoint in alternative directory for CIFAR10: {alt_checkpoint}")
+            
+            # Create the current run directory if it doesn't exist
+            os.makedirs(current_run_dir, exist_ok=True)
+            
+            # Copy metrics_history from the alternative directory to current directory
+            copy_metrics_history(alt_run_dir, current_run_dir)
+            
+            return alt_checkpoint
+        else:
+            print(f"No checkpoint found in alternative directory")
+    
+    print("No checkpoint found anywhere")
+    return None
 
 
 
@@ -68,7 +172,18 @@ if "--parallel-workers" in sys.argv:
         sys.argv.append("hydra/launcher=joblib")
         sys.argv.append(f"hydra.launcher.n_jobs={workers}")
 
-@hydra.main(config_path="configs", config_name="config")
+# Handle optional --dataset argument before Hydra parses CLI
+if "--dataset" in sys.argv:
+    idx = sys.argv.index("--dataset")
+    if idx + 1 < len(sys.argv):
+        dataset = sys.argv[idx + 1]
+        # Remove custom arguments so Hydra doesn't error on unknown args
+        del sys.argv[idx:idx + 2]
+        sys.argv.append(f"dataset={dataset}")
+
+        
+
+@hydra.main(version_base=None, config_path="configs", config_name="config")
 def run(cfg: DictConfig) -> None:
     # Set multiprocessing start method to 'spawn' for CUDA compatibility
     import multiprocessing
@@ -106,7 +221,13 @@ def run(cfg: DictConfig) -> None:
         ],
     )
 
-    det_checkpoint = cfg.det_checkpoint if "det_checkpoint" in cfg else None #take the latest checkpoint if not specified
+    # Find the appropriate checkpoint using the new logic
+    det_checkpoint = find_checkpoint_and_handle_cifar10(cfg)
+    if det_checkpoint:
+        print(f"Using checkpoint: {det_checkpoint}")
+    else:
+        print("No checkpoint found, starting from scratch")
+        det_checkpoint = cfg.det_checkpoint if "det_checkpoint" in cfg else None
 
     run_main(
         num_train_sample=cfg.num_train_sample,
