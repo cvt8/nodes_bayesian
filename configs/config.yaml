@@ -7,10 +7,13 @@ validation: true
 kl_type: mean
 entropy_type: conditional
 dataset: cifar10
+#dataset: cifar100
+#dataset: TinyImageNet
 gamma: 1.0
 lambda_info: 1.0
-run_id: "gamma_${gamma}_lambda_${lambda_info}"
+run_id: "gamma_${gamma}_lambda_${lambda_info}_dataset_${dataset}"
 base_dir: ./hydra_experiments
+det_checkpoint: .hydra_experiments/"gamma_${gamma}_lambda_${lambda_info}/hydra_experiments/checkpoint10.pt
 
 hydra:
   run:

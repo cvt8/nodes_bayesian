@@ -5,7 +5,18 @@ hydra:
     dir: ${base_dir}
     subdir: ${run_id}
   launcher:
-    _target_: hydra._internal.core_plugins.basic_launcher.BasicLauncher
+    _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
+    n_jobs: 64
+    backend: null
+    prefer: processes
+    require: null
+    verbose: 0
+    timeout: null
+    pre_dispatch: 2*n_jobs
+    batch_size: auto
+    temp_folder: null
+    max_nbytes: null
+    mmap_mode: r
   sweeper:
     _target_: hydra._internal.core_plugins.basic_sweeper.BasicSweeper
     max_batch_size: null
@@ -110,6 +121,8 @@ hydra:
   output_subdir: .hydra
   overrides:
     hydra:
+    - hydra/launcher=joblib
+    - hydra.launcher.n_jobs=64
     - hydra.mode=MULTIRUN
     task:
     - gamma=0.1
@@ -118,8 +131,8 @@ hydra:
     name: hydra_sweep
     chdir: null
     override_dirname: gamma=0.1,lambda_info=0.4
-    id: '15'
-    num: 15
+    id: hydra_sweep_4
+    num: 4
     config_name: config
     env_set: {}
     env_copy: []
@@ -151,6 +164,6 @@ hydra:
       hydra/hydra_help: default
       hydra/help: default
       hydra/sweeper: basic
-      hydra/launcher: basic
+      hydra/launcher: joblib
       hydra/output: default
   verbose: false
