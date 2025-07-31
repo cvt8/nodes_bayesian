@@ -66,17 +66,21 @@ sbatch batch_train.py
 
 You can launch a parameter sweep with Hydra using the `hydra_sweep.py` script.
 Jobs are executed in parallel via the `joblib` launcher. The number of workers
-can be configured with the `--parallel-workers` flag:
+can be configured with the `--parallel-workers` flag, and similarly the dataset using `--dataset {cifar10, cifar100, tinyimagenet}`. For instance, you can lauch an experiment using:
 
 ```bash
 python hydra_sweep.py -m \
   gamma=0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 \
   lambda_info=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 \
-  --parallel-workers 16
+  --parallel-workers 16 --dataset cifar10
 ```
 
 This will run the 110 combinations of `gamma` and `lambda_info` using up to
-16 parallel workers.
+16 parallel workers, on the Cifar 10 dataset.
+
+### Checkpoints
+
+Our code automatically looks for the most advanced checkpoints, to avoid loosing time retraining, and therefore start training for it, or apply directly inference, if all or more epochs have passed over.
 
 ## References
 

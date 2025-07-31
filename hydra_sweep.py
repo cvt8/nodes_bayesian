@@ -49,13 +49,13 @@ def find_highest_checkpoint(checkpoint_dir):
                 highest_epoch = epoch
                 highest_checkpoint = checkpoint_file
     
-    return highest_checkpoint
+    return highest_checkpoint, highest_epoch
 
 
 def copy_metrics_history(source_dir, target_dir):
     """Copy metrics_history directory from source to target."""
-    source_metrics = os.path.join(source_dir, "metrics_history")
-    target_metrics = os.path.join(target_dir, "metrics_history")
+    source_metrics = os.path.join(source_dir, "hydra_experiments/metrics_history")
+    target_metrics = os.path.join(target_dir, "hydra_experiments/metrics_history")
     
     if os.path.exists(source_metrics) and not os.path.exists(target_metrics):
         print(f"Copying metrics_history from {source_metrics} to {target_metrics}")
@@ -79,11 +79,10 @@ def find_checkpoint_and_handle_cifar10(cfg):
     # First, check for checkpoint in the current run directory
     current_run_dir = os.path.join(base_dir, current_run_id)
     print(f"Checking current run directory: {current_run_dir}")
-    current_checkpoint = find_highest_checkpoint(current_run_dir)
-    
+    current_checkpoint, current_checkpoint_epoch = find_highest_checkpoint(current_run_dir)
+
     if current_checkpoint:
         print(f"Found checkpoint in current run directory: {current_checkpoint}")
-        return current_checkpoint
     else:
         print(f"No checkpoint found in current run directory")
     
@@ -93,22 +92,50 @@ def find_checkpoint_and_handle_cifar10(cfg):
         gamma = cfg.gamma
         lambda_info = cfg.lambda_info
         alt_run_id = f"gamma_{gamma}_lambda_{lambda_info}"
-        alt_run_dir = os.path.join(base_dir, alt_run_id)
+        alt_run_dirname = f"gamma_{gamma}_lambda_{lambda_info}"
+        alt_run_dir = os.path.join(base_dir, alt_run_dirname)
         print(f"Checking alternative directory for CIFAR10: {alt_run_dir}")
-        alt_checkpoint = find_highest_checkpoint(alt_run_dir)
-        
+
+        # Check if the alternative directory exists
+        if not os.path.exists(alt_run_dir):
+            print(f"Alternative directory {alt_run_dir} does not exist")
+            alt_checkpoint = None
+            alt_checkpoint_epoch = -1
+        else:
+            alt_checkpoint, alt_checkpoint_epoch = find_highest_checkpoint(alt_run_dir)
+
         if alt_checkpoint:
             print(f"Found checkpoint in alternative directory for CIFAR10: {alt_checkpoint}")
             
-            # Create the current run directory if it doesn't exist
-            os.makedirs(current_run_dir, exist_ok=True)
+
+            if alt_checkpoint_epoch > current_checkpoint_epoch:
+                print(f"Using checkpoint from alternative directory: {alt_checkpoint}")
+                # Create the current run directory if it doesn't exist
+                os.makedirs(current_run_dir, exist_ok=True)
             
-            # Copy metrics_history from the alternative directory to current directory
-            copy_metrics_history(alt_run_dir, current_run_dir)
+                # Copy metrics_history from the alternative directory to current directory
+                copy_metrics_history(alt_run_dir, current_run_dir)
+
+                # Copy the checkpoint from alternative directory to current directory
+                checkpoint_filename = os.path.basename(alt_checkpoint)
+                target_checkpoint_path = os.path.join(current_run_dir, checkpoint_filename)
+                print(f"Copying checkpoint from {alt_checkpoint} to {target_checkpoint_path}")
+                shutil.copy2(alt_checkpoint, target_checkpoint_path)
+
+                return alt_checkpoint
+            else:
+                print(f"Current checkpoint is newer or equal to alternative checkpoint, using current checkpoint")
+                return current_checkpoint
             
-            return alt_checkpoint
         else:
             print(f"No checkpoint found in alternative directory")
+            if current_checkpoint:
+                return current_checkpoint
+
+    else:
+        if current_checkpoint:
+            return current_checkpoint
+        
     
     print("No checkpoint found anywhere")
     return None

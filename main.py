@@ -9,6 +9,7 @@ from model import StoResNet18
 import os
 import json
 import numpy as np
+import re
 
 
 train_history = {
@@ -130,12 +131,56 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
     print(f"Number of parameters: {sum(p.numel() for p in model.parameters())}")
     print(model)
 
-    if False:
+    def get_checkpoint_epoch(checkpoint_path):
+        """
+        Extract the epoch number from a checkpoint path.
+    
+        Args:
+           checkpoint_path (str): Path to the checkpoint file
+        
+        Returns:
+            int: The epoch number, or 0 if no number is found
+        
+        Examples:
+            get_checkpoint_epoch("./hydra_experiments/gamma_0.0_lambda_0.1_dataset_cifar10/checkpoint10.pt") -> 10
+            get_checkpoint_epoch("./hydra_experiments/gamma_0.0_lambda_0.1_dataset_cifar10/checkpoint.pt") -> 0
+        """
+        if not checkpoint_path:
+            return 0
+
+        
+        checkpoint_path = str(checkpoint_path)
+    
+        # Extract the filename from the path
+        filename = os.path.basename(checkpoint_path)
+        
+    
+        # Match checkpoint followed by optional number and .pt
+        match = re.match(r'checkpoint(\d*)\.pt', filename)
+        
+        if match:
+            epoch_str = match.group(1)
+            if epoch_str == '':
+                # checkpoint.pt without number, assume epoch 0
+                return 0
+            else:
+                return int(epoch_str)
+        return 0
+
+    if det_checkpoint:
         model = load_checkpoint(model, det_checkpoint, device)
         print(f"Loaded deterministic checkpoint from {det_checkpoint}")
+        checkpoint_number = get_checkpoint_epoch(det_checkpoint)
+        print(f"Checkpoint number: {checkpoint_number}")
+    else:
+        checkpoint_number = 0
+
+
 
     save_dir = os.path.join(base_dir, run_id)
-    for epoch in range(num_epochs):
+
+
+    for epoch in range(checkpoint_number, num_epochs):
         # Entraîne pour une époque
         eloglike, kl, entropy = train_epoch(
             model, train_loader, optimizer, scheduler, device, epoch,
@@ -209,26 +254,31 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
     # Charge le checkpoint final pour l'évaluation
     model = load_checkpoint(model, final_checkpoint_path, device)
 
-    # Évaluation sur l'ensemble de test
-    test_result = evaluate_and_save(
-        model, test_loader, os.path.join(base_dir, run_id, dataset, 'test_result.json'), device
-    )
-    print(f"Test results saved: {test_result}")
+    def final_check():
+        
 
-    # Évaluation sur l'ensemble de validation (si activé)
-    if validation:
-        valid_result = evaluate_and_save(
-            model, valid_loader, os.path.join(base_dir, run_id, dataset, 'valid_result.json'), device
+        # Évaluation sur l'ensemble de test
+        test_result = evaluate_and_save(
+            model, test_loader, os.path.join(base_dir, run_id, dataset, 'test_result.json'), device
         )
-        print(f"Validation results saved: {valid_result}")
+        print(f"Test results saved: {test_result}")
 
-    # Évaluation sur les données corrompues
-    for intensity in range(5):
-        corrupted_loader = get_corruptdataloader(intensity)
-        corrupted_result = evaluate_and_save(
-            model, corrupted_loader, os.path.join(base_dir, run_id, dataset, str(intensity), 'result.json'), device
-        )
-        print(f"Corrupted data (intensity {intensity}) results saved: {corrupted_result}")
+        # Évaluation sur l'ensemble de validation (si activé)
+        if validation:
+            valid_result = evaluate_and_save(
+                model, valid_loader, os.path.join(base_dir, run_id, dataset, 'valid_result.json'), device
+            )
+            print(f"Validation results saved: {valid_result}")
+
+        # Évaluation sur les données corrompues
+        for intensity in range(5):
+            corrupted_loader = get_corruptdataloader(intensity)
+            corrupted_result = evaluate_and_save(
+                model, corrupted_loader, os.path.join(base_dir, run_id, dataset, str(intensity), 'result.json'), device
+            )
+            print(f"Corrupted data (intensity {intensity}) results saved: {corrupted_result}")
+
+    final_check()
 
 
 if __name__ == "__main__":
