@@ -70,9 +70,9 @@ can be configured with the `--parallel-workers` flag, and similarly the dataset 
 
 ```bash
 python hydra_sweep.py -m \
-  gamma=0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 \
-  lambda_info=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0 \
-  --parallel-workers 16 --dataset cifar10
+  gamma=0.0,0.1,0.3,0.5,0.7,1.0 \
+  lambda_info=0.0,0.2,0.4,0.6,0.8,1.0 \
+  --parallel-workers 16 --dataset cifar100
 ```
 
 This will run the 110 combinations of `gamma` and `lambda_info` using up to

@@ -17,7 +17,7 @@ from main import main as run_main
 def find_highest_checkpoint(checkpoint_dir):
     """Find the highest numbered checkpoint in a directory and its subdirectories."""
     if not os.path.exists(checkpoint_dir):
-        return None
+        return -1, -1
     
     # Search recursively for checkpoint files
     checkpoint_files = []
@@ -27,11 +27,11 @@ def find_highest_checkpoint(checkpoint_dir):
                 checkpoint_files.append(os.path.join(root, file))
     
     if not checkpoint_files:
-        return None
+        return -1, -1
     
     # Extract epoch numbers from checkpoint filenames
     highest_epoch = -1
-    highest_checkpoint = None
+    highest_checkpoint = -1
     
     for checkpoint_file in checkpoint_files:
         filename = os.path.basename(checkpoint_file)
@@ -81,10 +81,13 @@ def find_checkpoint_and_handle_cifar10(cfg):
     print(f"Checking current run directory: {current_run_dir}")
     current_checkpoint, current_checkpoint_epoch = find_highest_checkpoint(current_run_dir)
 
+    if current_checkpoint_epoch == -1:
+        print(f"No checkpoints found in current run directory: {current_run_dir}")
+        current_checkpoint = None
+        current_checkpoint_epoch = -1
+
     if current_checkpoint:
         print(f"Found checkpoint in current run directory: {current_checkpoint}")
-    else:
-        print(f"No checkpoint found in current run directory")
     
     # For CIFAR10, also check the non-dataset-specific directory
     if dataset == 'cifar10':

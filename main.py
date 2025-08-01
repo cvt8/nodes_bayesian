@@ -256,22 +256,35 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
 
     def final_check():
         
-
+        if not os.path.exists(os.path.join(base_dir, run_id, dataset, 'test_result.json')):
         # Évaluation sur l'ensemble de test
-        test_result = evaluate_and_save(
-            model, test_loader, os.path.join(base_dir, run_id, dataset, 'test_result.json'), device
-        )
-        print(f"Test results saved: {test_result}")
+            test_result = evaluate_and_save(
+                model, test_loader, os.path.join(base_dir, run_id, dataset, 'test_result.json'), device
+            )
+            print(f"Test results saved: {test_result}")
+        else:
+            print("Test results already exist, skipping test evaluation.")
 
         # Évaluation sur l'ensemble de validation (si activé)
-        if validation:
+        if validation and not os.path.exists(os.path.join(base_dir, run_id, dataset, 'valid_result.json')):
+                
             valid_result = evaluate_and_save(
                 model, valid_loader, os.path.join(base_dir, run_id, dataset, 'valid_result.json'), device
             )
             print(f"Validation results saved: {valid_result}")
+        else:
+            print("Validation results already exist, skipping validation evaluation.")
 
         # Évaluation sur les données corrompues
         for intensity in range(5):
+            #Do not compute if intensity has already been evaluated
+            if os.path.exists(os.path.join(base_dir, run_id, dataset, str(intensity), 'result.json')):
+                print(f"Skipping intensity {intensity} as it has already been evaluated.")
+                continue
+            
+            print(f"Evaluating corrupted data with intensity {intensity}")
+
+
             corrupted_loader = get_corruptdataloader(intensity)
             corrupted_result = evaluate_and_save(
                 model, corrupted_loader, os.path.join(base_dir, run_id, dataset, str(intensity), 'result.json'), device
