@@ -6,7 +6,7 @@ hydra:
     subdir: ${run_id}
   launcher:
     _target_: hydra_plugins.hydra_joblib_launcher.joblib_launcher.JoblibLauncher
-    n_jobs: 1
+    n_jobs: 10
     backend: null
     prefer: processes
     require: null
@@ -122,16 +122,16 @@ hydra:
   overrides:
     hydra:
     - hydra/launcher=joblib
-    - hydra.launcher.n_jobs=1
+    - hydra.launcher.n_jobs=10
     - hydra.mode=MULTIRUN
     task:
-    - gamma=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0
-    - lambda_info=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0
-    - dataset=cifar10
+    - gamma=0.0,0.1,0.3,0.5,0.7,0.9
+    - lambda_info=0.0,0.1,0.2,0.3,0.5,0.6,0.8
+    - dataset=tinyimagenet
   job:
     name: hydra_sweep
     chdir: null
-    override_dirname: dataset=cifar10,gamma=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0,lambda_info=0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0
+    override_dirname: dataset=tinyimagenet,gamma=0.0,0.1,0.3,0.5,0.7,0.9,lambda_info=0.0,0.1,0.2,0.3,0.5,0.6,0.8
     id: ???
     num: ???
     config_name: config
@@ -173,9 +173,8 @@ num_train_sample: 1
 validation: true
 kl_type: mean
 entropy_type: conditional
-dataset: cifar10
+dataset: tinyimagenet
 gamma: 0.0
 lambda_info: 0.1
 run_id: gamma_${gamma}_lambda_${lambda_info}_dataset_${dataset}
 base_dir: ./hydra_experiments
-det_checkpoint: .hydra_experiments/"gamma_${gamma}_lambda_${lambda_info}/hydra_experiments/checkpoint10.pt

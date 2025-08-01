@@ -81,6 +81,7 @@ This will run the 110 combinations of `gamma` and `lambda_info` using up to
 ### Checkpoints
 
 Our code automatically looks for the most advanced checkpoints, to avoid loosing time retraining, and therefore start training for it, or apply directly inference, if all or more epochs have passed over.
+If the  final are already in the computation folder, the model won't compute them again. For pure reproduction, please save somewhere else the results.
 
 ## References
 

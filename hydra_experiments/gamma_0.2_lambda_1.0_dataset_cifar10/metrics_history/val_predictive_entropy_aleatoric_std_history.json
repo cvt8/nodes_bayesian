@@ -1,0 +1,9 @@
+{
+    "metric": "predictive_entropy_aleatoric_std",
+    "split": "val",
+    "values": [
+        0.5917081236839294,
+        0.5743897557258606,
+        0.6084908246994019
+    ]
+}

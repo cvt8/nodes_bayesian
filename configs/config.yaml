@@ -10,9 +10,9 @@ entropy_type: conditional
 dataset: cifar10
 gamma: 0.0
 lambda_info: 0.1
-run_id: "gamma_${gamma}_lambda_${lambda_info}_dataset_${dataset}"
+run_id: gamma_${gamma}_lambda_${lambda_info}_dataset_${dataset}
 base_dir: ./hydra_experiments
-det_checkpoint: .hydra_experiments/"gamma_${gamma}_lambda_${lambda_info}/hydra_experiments/checkpoint10.pt
+
 
 hydra:
   run:

@@ -1,0 +1,9 @@
+{
+    "metric": "predictive_entropy_epistemic_mean",
+    "split": "val",
+    "values": [
+        0.013351471163332462,
+        0.006286992691457272,
+        0.01638493314385414
+    ]
+}
