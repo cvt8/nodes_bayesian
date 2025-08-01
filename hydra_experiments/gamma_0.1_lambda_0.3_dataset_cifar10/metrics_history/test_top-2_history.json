@@ -1,0 +1,8 @@
+{
+    "metric": "top-2",
+    "split": "test",
+    "values": [
+        0.5843,
+        0.6702
+    ]
+}

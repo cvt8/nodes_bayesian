@@ -1,0 +1,8 @@
+{
+    "metric": "predictive_entropy_epistemic_std",
+    "split": "test",
+    "values": [
+        0.01773037016391754,
+        0.019315283745527267
+    ]
+}
