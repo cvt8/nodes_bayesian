@@ -32,9 +32,12 @@ def find_highest_checkpoint(checkpoint_dir):
     # Extract epoch numbers from checkpoint filenames
     highest_epoch = -1
     highest_checkpoint = -1
-    
+
     for checkpoint_file in checkpoint_files:
         filename = os.path.basename(checkpoint_file)
+        # If we find "checkpoint.pt" (without numbers), it's the highest priority
+        if filename == "checkpoint.pt":
+            return checkpoint_file, float('inf')  # Use infinity to ensure it's always highest
         # Match checkpoint followed by optional number and .pt
         match = re.match(r'checkpoint(\d*)\.pt', filename)
         if match:
