@@ -95,11 +95,13 @@ def _plot_metric(dataset: str, metric_name: str, cond: str, values):
     ax.set_ylabel("lambda")
     ax.set_zlabel(metric_name)
     max_idx = np.argmax(metric_vals)
+    max_value = metric_vals[max_idx]
+    min_value = metric_vals[np.argmin(metric_vals)]
     min_idx = np.argmin(metric_vals)
     title = (
         f"{dataset} - {metric_name} ({cond})\n"
-        f"argmax: gamma={gammas[max_idx]}, lambda={lambdas[max_idx]} ; "
-        f"argmin: gamma={gammas[min_idx]}, lambda={lambdas[min_idx]}"
+        f"argmax: gamma={gammas[max_idx]}, lambda={lambdas[max_idx]} (max_value: {max_value}); \n"
+        f"argmin: gamma={gammas[min_idx]}, lambda={lambdas[min_idx]} (min_value: {min_value})"
     )
     ax.set_title(title)
     fig.colorbar(sc, ax=ax, shrink=0.6)
