@@ -147,12 +147,15 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
         """
         if not checkpoint_path:
             return 0
-
         
         checkpoint_path = str(checkpoint_path)
     
         # Extract the filename from the path
         filename = os.path.basename(checkpoint_path)
+
+        if filename == "checkpoint.pt":
+            # Special case for "checkpoint.pt" without a number
+            return num_epochs
         
     
         # Match checkpoint followed by optional number and .pt
