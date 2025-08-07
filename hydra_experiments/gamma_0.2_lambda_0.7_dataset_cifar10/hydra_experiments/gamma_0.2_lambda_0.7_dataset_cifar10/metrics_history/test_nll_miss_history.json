@@ -1,7 +1,0 @@
-{
-    "metric": "nll_miss",
-    "split": "test",
-    "values": [
-        2.2312036494318095
-    ]
-}

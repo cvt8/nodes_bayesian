@@ -1,8 +1,0 @@
-{
-    "metric": "entropy",
-    "split": "train",
-    "values": [
-        -7373.2890625,
-        -7376.3828125
-    ]
-}

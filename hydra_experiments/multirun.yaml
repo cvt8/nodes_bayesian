@@ -127,11 +127,11 @@ hydra:
     task:
     - gamma=0.0,1.0,5.0,10.0,20.0,40.
     - lambda_info=0.0,1.0,5.0,10.0,20.,40.
-    - dataset=tinyimagenet
+    - dataset=cifar10
   job:
     name: hydra_sweep
     chdir: null
-    override_dirname: dataset=tinyimagenet,gamma=0.0,1.0,5.0,10.0,20.0,40.,lambda_info=0.0,1.0,5.0,10.0,20.,40.
+    override_dirname: dataset=cifar10,gamma=0.0,1.0,5.0,10.0,20.0,40.,lambda_info=0.0,1.0,5.0,10.0,20.,40.
     id: ???
     num: ???
     config_name: config
@@ -173,7 +173,7 @@ num_train_sample: 1
 validation: true
 kl_type: mean
 entropy_type: conditional
-dataset: tinyimagenet
+dataset: cifar10
 gamma: 0.0
 lambda_info: 0.1
 run_id: gamma_${gamma}_lambda_${lambda_info}_dataset_${dataset}

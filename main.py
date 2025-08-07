@@ -152,11 +152,6 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
     
         # Extract the filename from the path
         filename = os.path.basename(checkpoint_path)
-
-        if filename == "checkpoint.pt":
-            # Special case for "checkpoint.pt" without a number
-            return num_epochs
-        
     
         # Match checkpoint followed by optional number and .pt
         match = re.match(r'checkpoint(\d*)\.pt', filename)
@@ -164,8 +159,7 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
         if match:
             epoch_str = match.group(1)
             if epoch_str == '':
-                # checkpoint.pt without number, assume epoch 0
-                return 0
+                return num_epochs
             else:
                 return int(epoch_str)
         return 0
@@ -260,6 +254,7 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
     def final_check():
         
         if not os.path.exists(os.path.join(base_dir, run_id, dataset, 'test_result.json')):
+        #if True:
         # Évaluation sur l'ensemble de test
             test_result = evaluate_and_save(
                 model, test_loader, os.path.join(base_dir, run_id, dataset, 'test_result.json'), device
@@ -269,6 +264,7 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
             print("Test results already exist, skipping test evaluation.")
 
         # Évaluation sur l'ensemble de validation (si activé)
+        #if True:
         if validation and not os.path.exists(os.path.join(base_dir, run_id, dataset, 'valid_result.json')):
                 
             valid_result = evaluate_and_save(
@@ -281,6 +277,7 @@ def main(num_train_sample, device, validation, num_epochs, logging_freq,
         # Évaluation sur les données corrompues
         for intensity in range(5):
             #Do not compute if intensity has already been evaluated
+            #if False:
             if os.path.exists(os.path.join(base_dir, run_id, dataset, str(intensity), 'result.json')):
                 print(f"Skipping intensity {intensity} as it has already been evaluated.")
                 continue

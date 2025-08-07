@@ -1,8 +1,0 @@
-{
-    "metric": "predictive_entropy_total_mean",
-    "split": "test",
-    "values": [
-        1.1060709953308105,
-        1.0829559564590454
-    ]
-}
