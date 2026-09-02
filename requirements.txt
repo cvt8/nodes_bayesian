@@ -1,0 +1,11 @@
+numpy
+scipy
+tqdm
+matplotlib
+scikit-learn
+torch --index-url https://download.pytorch.org/whl/cu126
+torchvision --index-url https://download.pytorch.org/whl/cu126
+rich
+prettytable
+hydra-core
+hydra-joblib-launcher

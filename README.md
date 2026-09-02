@@ -16,8 +16,9 @@ Please cite our work if you find it useful:
 
 Get into this repository and run:
 ```bash
-conda env create
-conda activate nodes_env
+uv venv --python 3.14.7 --seed
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 
@@ -47,6 +48,9 @@ bash download_scripts/download_tinyimagenet_c.sh
 +-- model.py (script that contains the basic model)
 +-- plot.py (to plot models comparisons)
 +-- tiny_imagenet (contains useful parts of the model)
++--collect.py (figures)
++--make_heatmaps.py (figures)
++--make_lambda_gain.py (figures)
 ```
 
 ## Command to replicate the result
